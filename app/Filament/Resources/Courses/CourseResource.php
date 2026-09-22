@@ -51,6 +51,7 @@ class CourseResource extends Resource
     {
         return [
             \App\Filament\Resources\Courses\RelationManagers\ModulesRelationManager::class,
+            \App\Filament\Resources\Courses\RelationManagers\QuizzesRelationManager::class,
             \App\Filament\Resources\Courses\RelationManagers\EnrollmentsRelationManager::class,
         ];
     }
