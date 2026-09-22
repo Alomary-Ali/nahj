@@ -101,7 +101,7 @@ class DiscussionCommunityTest extends TestCase
     public function test_instructor_reply_is_automatically_endorsed(): void
     {
         $course = Course::where('slug', 'neural-networks-and-deep-learning')->firstOrFail();
-        $instructor = User::where('email', 'instructor@coursura.com')->firstOrFail();
+        $instructor = $course->instructor;
         $student = User::where('email', 'student@coursura.com')->firstOrFail();
 
         $thread = DiscussionThread::create([
@@ -165,7 +165,7 @@ class DiscussionCommunityTest extends TestCase
     public function test_instructor_can_toggle_endorsement_on_reply(): void
     {
         $course = Course::where('slug', 'neural-networks-and-deep-learning')->firstOrFail();
-        $instructor = User::where('email', 'instructor@coursura.com')->firstOrFail();
+        $instructor = $course->instructor;
         $student = User::where('email', 'student@coursura.com')->firstOrFail();
 
         $thread = DiscussionThread::create([

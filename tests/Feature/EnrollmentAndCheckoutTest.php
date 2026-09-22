@@ -53,7 +53,7 @@ class EnrollmentAndCheckoutTest extends TestCase
 
     public function test_non_preview_lesson_redirects_unenrolled_student_to_checkout(): void
     {
-        $student = User::where('email', 'student@coursura.com')->firstOrFail();
+        $student = User::where('email', 'student@nahj.com')->firstOrFail();
         $course = Course::where('slug', 'neural-networks-and-deep-learning')->firstOrFail();
         $paidLesson = Lesson::where('slug', 'ai-history-and-evolution')->where('is_preview', false)->firstOrFail();
 
@@ -81,7 +81,7 @@ class EnrollmentAndCheckoutTest extends TestCase
 
     public function test_enrolling_student_creates_active_enrollment_and_grants_access(): void
     {
-        $student = User::where('email', 'student@coursura.com')->firstOrFail();
+        $student = User::where('email', 'student@nahj.com')->firstOrFail();
         $course = Course::where('slug', 'neural-networks-and-deep-learning')->firstOrFail();
         $paidLesson = Lesson::where('slug', 'ai-history-and-evolution')->where('is_preview', false)->firstOrFail();
 
@@ -111,7 +111,7 @@ class EnrollmentAndCheckoutTest extends TestCase
 
     public function test_duplicate_enrollment_is_handled_gracefully(): void
     {
-        $student = User::where('email', 'student@coursura.com')->firstOrFail();
+        $student = User::where('email', 'student@nahj.com')->firstOrFail();
         $course = Course::where('slug', 'neural-networks-and-deep-learning')->firstOrFail();
 
         // First enroll
@@ -125,7 +125,7 @@ class EnrollmentAndCheckoutTest extends TestCase
 
     public function test_dashboard_renders_enrolled_courses_and_certificates(): void
     {
-        $student = User::where('email', 'student@coursura.com')->firstOrFail();
+        $student = User::where('email', 'student@nahj.com')->firstOrFail();
         $course = Course::where('slug', 'neural-networks-and-deep-learning')->firstOrFail();
 
         // Enroll student

@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Certificate;
 use App\Models\Course;
+use App\Models\Enrollment;
+use App\Models\LessonProgress;
 use App\Models\Quiz;
 use App\Models\QuizSubmission;
 use App\Models\User;
@@ -50,11 +52,96 @@ class AssessmentAndCertificateTest extends TestCase
         $response->assertRedirect(route('login'));
     }
 
-    public function test_submitting_quiz_with_passing_score_generates_certificate(): void
+    public function test_unenrolled_student_cannot_submit_quiz(): void
     {
-        $student = User::where('email', 'student@coursura.com')->firstOrFail();
+        $student = User::where('email', 'student@nahj.com')->firstOrFail();
+        $course = Course::where('slug', 'neural-networks-and-deep-learning')->firstOrFail();
+        $quiz = Quiz::where('course_id', $course->id)->firstOrFail();
+
+        // Ensure user is NOT enrolled
+        Enrollment::where('user_id', $student->id)->where('course_id', $course->id)->delete();
+
+        $response = $this->actingAs($student)
+            ->post(route('courses.quiz.submit', ['course' => $course->slug, 'quiz' => $quiz->id]), [
+                'answers' => [1 => 1],
+            ]);
+
+        $response->assertRedirect(route('courses.checkout.show', $course->slug));
+        $response->assertSessionHas('error');
+    }
+
+    public function test_passing_quiz_without_completing_lessons_does_not_issue_premature_certificate(): void
+    {
+        $student = User::where('email', 'student@nahj.com')->firstOrFail();
         $course = Course::where('slug', 'neural-networks-and-deep-learning')->firstOrFail();
         $quiz = Quiz::where('course_id', $course->id)->with('questions.options')->firstOrFail();
+
+        // Enroll student
+        Enrollment::firstOrCreate([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+        ], [
+            'status' => 'active',
+            'price_paid' => 0.00,
+            'enrolled_at' => now(),
+        ]);
+
+        // Clear any lesson progress so lessons are 0% completed
+        LessonProgress::where('user_id', $student->id)->where('course_id', $course->id)->delete();
+
+        // Prepare 100% correct answers
+        $correctAnswers = [];
+        foreach ($quiz->questions as $question) {
+            $correctOption = $question->options->firstWhere('is_correct', true);
+            $correctAnswers[$question->id] = $correctOption->id;
+        }
+
+        $response = $this->actingAs($student)
+            ->post(route('courses.quiz.submit', ['course' => $course->slug, 'quiz' => $quiz->id]), [
+                'answers' => $correctAnswers,
+            ]);
+
+        $response->assertRedirect(route('courses.quiz.show', ['course' => $course->slug, 'quiz' => $quiz->id]));
+        $response->assertSessionHas('success');
+
+        // Submission is passed in DB
+        $submission = QuizSubmission::where('user_id', $student->id)->where('quiz_id', $quiz->id)->first();
+        $this->assertNotNull($submission);
+        $this->assertTrue((bool) $submission->passed);
+
+        // Certificate must NOT be generated yet because student has not finished the lessons!
+        $certificate = Certificate::where('user_id', $student->id)->where('course_id', $course->id)->first();
+        $this->assertNull($certificate);
+    }
+
+    public function test_submitting_quiz_with_passing_score_and_completed_lessons_generates_certificate(): void
+    {
+        $student = User::where('email', 'student@nahj.com')->firstOrFail();
+        $course = Course::where('slug', 'neural-networks-and-deep-learning')->firstOrFail();
+        $quiz = Quiz::where('course_id', $course->id)->with('questions.options')->firstOrFail();
+
+        // Enroll student
+        Enrollment::firstOrCreate([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+        ], [
+            'status' => 'active',
+            'price_paid' => 0.00,
+            'enrolled_at' => now(),
+        ]);
+
+        // Complete all lessons in the course for this student
+        foreach ($course->lessons as $lesson) {
+            LessonProgress::updateOrCreate(
+                ['user_id' => $student->id, 'lesson_id' => $lesson->id],
+                [
+                    'course_id' => $course->id,
+                    'seconds_watched' => $lesson->duration_seconds,
+                    'is_completed' => true,
+                    'completed_at' => now(),
+                ]
+            );
+        }
 
         // Prepare 100% correct answers
         $correctAnswers = [];
@@ -80,16 +167,26 @@ class AssessmentAndCertificateTest extends TestCase
         // Verify certificate generated in DB
         $certificate = Certificate::where('user_id', $student->id)->where('course_id', $course->id)->first();
         $this->assertNotNull($certificate);
-        $this->assertStringStartsWith('COUR-', $certificate->certificate_code);
+        $this->assertStringStartsWith('NAHJ-', $certificate->certificate_code);
         $this->assertNotEmpty($certificate->verification_hash);
         $this->assertEquals(64, strlen($certificate->verification_hash)); // SHA-256 length
     }
 
     public function test_submitting_quiz_with_failing_score_does_not_generate_certificate(): void
     {
-        $student = User::where('email', 'student@coursura.com')->firstOrFail();
+        $student = User::where('email', 'student@nahj.com')->firstOrFail();
         $course = Course::where('slug', 'neural-networks-and-deep-learning')->firstOrFail();
         $quiz = Quiz::where('course_id', $course->id)->with('questions.options')->firstOrFail();
+
+        // Enroll student
+        Enrollment::firstOrCreate([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+        ], [
+            'status' => 'active',
+            'price_paid' => 0.00,
+            'enrolled_at' => now(),
+        ]);
 
         // Prepare 0% correct answers (pick wrong option for all)
         $wrongAnswers = [];
@@ -119,8 +216,8 @@ class AssessmentAndCertificateTest extends TestCase
 
     public function test_public_certificate_verification_page_renders_authenticity_data(): void
     {
-        $student = User::where('email', 'student@coursura.com')->firstOrFail();
-        $instructor = User::where('email', 'instructor@coursura.com')->firstOrFail();
+        $student = User::where('email', 'student@nahj.com')->firstOrFail();
+        $instructor = User::where('email', 'instructor@nahj.com')->firstOrFail();
         $course = Course::where('slug', 'neural-networks-and-deep-learning')->firstOrFail();
 
         $certificate = Certificate::create([
