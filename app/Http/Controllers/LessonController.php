@@ -28,16 +28,6 @@ class LessonController extends Controller
             ->whereHas('module', fn ($q) => $q->where('course_id', $course->id))
             ->firstOrFail();
 
-        if ($lesson->type === 'quiz') {
-            $quiz = \App\Models\Quiz::where('lesson_id', $lesson->id)
-                ->orWhere('course_id', $course->id)
-                ->first();
-
-            if ($quiz) {
-                return redirect()->route('courses.quiz.show', ['course' => $course->slug, 'quiz' => $quiz->id]);
-            }
-        }
-
         // Gatekeeper: If lesson is not preview, student must be authenticated and enrolled (or admin/instructor)
         if (! $lesson->is_preview) {
             if (! auth()->check()) {
@@ -53,6 +43,16 @@ class LessonController extends Controller
             if (! $isAuthorized) {
                 return redirect()->route('courses.checkout.show', $course->slug)
                     ->with('error', 'هذا الدرس متاح للطلاب المسجلين في المقرر. يرجى إتمام التسجيل للوصول لكامل المحتوى.');
+            }
+        }
+
+        if ($lesson->type === 'quiz') {
+            $quiz = \App\Models\Quiz::where('lesson_id', $lesson->id)
+                ->orWhere('course_id', $course->id)
+                ->first();
+
+            if ($quiz) {
+                return redirect()->route('courses.quiz.show', ['course' => $course->slug, 'quiz' => $quiz->id]);
             }
         }
 

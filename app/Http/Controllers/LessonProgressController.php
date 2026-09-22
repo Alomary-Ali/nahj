@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Curriculum\CheckAndIssueCourseCertificateAction;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Lesson;
@@ -11,8 +12,12 @@ use Illuminate\Http\Request;
 
 class LessonProgressController extends Controller
 {
-    public function update(Request $request, string $courseSlug, string $lessonSlug): JsonResponse
-    {
+    public function update(
+        Request $request,
+        string $courseSlug,
+        string $lessonSlug,
+        CheckAndIssueCourseCertificateAction $checkAndIssueCertificateAction
+    ): JsonResponse {
         $validated = $request->validate([
             'seconds_watched' => ['required', 'integer', 'min:0'],
             'duration_seconds' => ['nullable', 'integer', 'min:1'],
@@ -53,12 +58,14 @@ class LessonProgressController extends Controller
 
         $completionPercentage = $totalLessons > 0 ? round(($completedLessons / $totalLessons) * 100, 1) : 0;
 
-        // If all lessons completed, update enrollment status to completed
+        // If all lessons completed, update enrollment status to completed and evaluate certificate issuance
         if ($completedLessons >= $totalLessons && $totalLessons > 0) {
             Enrollment::where('user_id', $user->id)
                 ->where('course_id', $course->id)
                 ->where('status', 'active')
                 ->update(['status' => 'completed']);
+
+            $checkAndIssueCertificateAction->execute($user, $course);
         }
 
         return response()->json([
