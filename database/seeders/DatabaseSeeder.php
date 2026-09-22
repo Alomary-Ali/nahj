@@ -25,7 +25,7 @@ class DatabaseSeeder extends Seeder
 
         // 2. Create Super Admin User
         $admin = User::firstOrCreate(
-            ['email' => 'admin@coursura.com'],
+            ['email' => 'admin@nahj.com'],
             [
                 'name' => 'Platform Admin',
                 'password' => Hash::make('password123'),
@@ -36,7 +36,7 @@ class DatabaseSeeder extends Seeder
 
         // 3. Create Demo Instructor
         $instructor = User::firstOrCreate(
-            ['email' => 'instructor@coursura.com'],
+            ['email' => 'instructor@nahj.com'],
             [
                 'name' => 'Dr. Andrew Ng (Demo)',
                 'password' => Hash::make('password123'),
@@ -47,7 +47,7 @@ class DatabaseSeeder extends Seeder
 
         // 4. Create Demo Student
         $student = User::firstOrCreate(
-            ['email' => 'student@coursura.com'],
+            ['email' => 'student@nahj.com'],
             [
                 'name' => 'Student Learner',
                 'password' => Hash::make('password123'),
