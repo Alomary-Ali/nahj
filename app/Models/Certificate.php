@@ -34,7 +34,7 @@ class Certificate extends Model
     {
         static::creating(function ($cert) {
             if (empty($cert->certificate_code)) {
-                $cert->certificate_code = 'COUR-' . date('Y') . '-' . strtoupper(Str::random(8));
+                $cert->certificate_code = 'NAHJ-' . date('Y') . '-' . strtoupper(Str::random(8));
             }
             if (empty($cert->verification_hash)) {
                 $cert->verification_hash = hash('sha256', $cert->certificate_code . '-' . $cert->user_id . '-' . $cert->course_id . '-' . time());

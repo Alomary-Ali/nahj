@@ -34,7 +34,7 @@ class DatabaseSeeder extends Seeder
         );
         $admin->assignRole($adminRole);
 
-        // 3. Create Demo Instructor
+        // 3. Create Demo Instructors
         $instructor = User::firstOrCreate(
             ['email' => 'instructor@nahj.com'],
             [
@@ -45,7 +45,17 @@ class DatabaseSeeder extends Seeder
         );
         $instructor->assignRole($instructorRole);
 
-        // 4. Create Demo Student
+        $coursuraInstructor = User::firstOrCreate(
+            ['email' => 'instructor@coursura.com'],
+            [
+                'name' => 'د. طارق المنصور',
+                'password' => Hash::make('password123'),
+                'email_verified_at' => now(),
+            ]
+        );
+        $coursuraInstructor->assignRole($instructorRole);
+
+        // 4. Create Demo Students
         $student = User::firstOrCreate(
             ['email' => 'student@nahj.com'],
             [
@@ -55,6 +65,16 @@ class DatabaseSeeder extends Seeder
             ]
         );
         $student->assignRole($studentRole);
+
+        $coursuraStudent = User::firstOrCreate(
+            ['email' => 'student@coursura.com'],
+            [
+                'name' => 'سارة أحمد',
+                'password' => Hash::make('password123'),
+                'email_verified_at' => now(),
+            ]
+        );
+        $coursuraStudent->assignRole($studentRole);
 
         // 5. Seed Curriculum Data
         $this->call(CurriculumSeeder::class);

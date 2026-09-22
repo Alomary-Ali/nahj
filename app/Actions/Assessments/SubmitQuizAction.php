@@ -2,7 +2,7 @@
 
 namespace App\Actions\Assessments;
 
-use App\Actions\Certificates\GenerateCertificateAction;
+use App\Actions\Curriculum\CheckAndIssueCourseCertificateAction;
 use App\Models\Quiz;
 use App\Models\QuizSubmission;
 use App\Models\User;
@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 class SubmitQuizAction
 {
     public function __construct(
-        protected GenerateCertificateAction $generateCertificateAction
+        protected CheckAndIssueCourseCertificateAction $checkAndIssueCertificateAction
     ) {}
 
     public function execute(User $user, Quiz $quiz, array $submittedAnswers): QuizSubmission
@@ -51,9 +51,9 @@ class SubmitQuizAction
                 'submitted_at' => now(),
             ]);
 
-            // If passed, issue the official certificate for the course
+            // If passed, evaluate course-level completion criteria
             if ($passed && $quiz->course) {
-                $this->generateCertificateAction->execute($user, $quiz->course, $percentage);
+                $this->checkAndIssueCertificateAction->execute($user, $quiz->course);
             }
 
             return $submission;
