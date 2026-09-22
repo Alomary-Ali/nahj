@@ -17,7 +17,7 @@ class CurriculumSeeder extends Seeder
 {
     public function run(): void
     {
-        $instructor = User::where('email', 'instructor@coursura.com')->first();
+        $instructor = User::where('email', 'instructor@nahj.com')->first();
         if (! $instructor) {
             return;
         }
