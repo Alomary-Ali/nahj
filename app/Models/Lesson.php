@@ -74,4 +74,9 @@ class Lesson extends Model
     {
         return $this->hasMany(LessonNote::class)->orderBy('timestamp_seconds', 'asc');
     }
+
+    public function subtitles(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(LessonSubtitle::class);
+    }
 }

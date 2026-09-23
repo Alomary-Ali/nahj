@@ -3,6 +3,15 @@ import { ref } from 'vue';
 import { Head, Link, useForm, usePage, router } from '@inertiajs/vue3';
 import type { DiscussionThread, LessonNote, PageProps } from '@/types';
 
+interface LessonSubtitle {
+    id: number;
+    lesson_id: number;
+    language: string;
+    label: string;
+    file_url: string;
+    is_default?: boolean;
+}
+
 interface Lesson {
     id: number;
     title: string;
@@ -12,6 +21,7 @@ interface Lesson {
     content?: string;
     video_url?: string;
     is_preview: boolean;
+    subtitles?: LessonSubtitle[];
 }
 
 interface Module {
@@ -52,6 +62,8 @@ const showMobileDrawer = ref(false);
 const activeTab = ref<'overview' | 'notes' | 'discussions'>('overview');
 const videoPlaybackRate = ref(1.0);
 const videoPlayerRef = ref<HTMLVideoElement | null>(null);
+const showCcMenu = ref(false);
+const selectedSubtitleLang = ref<string>('off');
 
 const completedIds = ref<number[]>([...(props.completedLessonIds || [])]);
 const progressPercentage = ref(props.courseProgressPercentage || 0);
@@ -98,9 +110,40 @@ function formatTime(seconds: number): string {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
+function applySubtitle(lang: string) {
+    selectedSubtitleLang.value = lang;
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('preferred_subtitle_lang', lang);
+    }
+    showCcMenu.value = false;
+
+    if (!videoPlayerRef.value) return;
+    const tracks = videoPlayerRef.value.textTracks;
+    for (let i = 0; i < tracks.length; i++) {
+        const track = tracks[i];
+        if (lang !== 'off' && track.language === lang) {
+            track.mode = 'showing';
+        } else {
+            track.mode = 'disabled';
+        }
+    }
+}
+
 function onVideoLoaded() {
     if (videoPlayerRef.value && props.currentProgress?.seconds_watched) {
         videoPlayerRef.value.currentTime = props.currentProgress.seconds_watched;
+    }
+
+    const savedLang = typeof window !== 'undefined' ? localStorage.getItem('preferred_subtitle_lang') : null;
+    if (savedLang && savedLang !== 'off' && props.currentLesson.subtitles?.some(s => s.language === savedLang)) {
+        applySubtitle(savedLang);
+    } else {
+        const defaultSub = props.currentLesson.subtitles?.find(s => s.is_default);
+        if (defaultSub) {
+            applySubtitle(defaultSub.language);
+        } else {
+            applySubtitle('off');
+        }
     }
 }
 
@@ -246,12 +289,22 @@ function setPlaybackRate(rate: number) {
                                 ref="videoPlayerRef"
                                 controls
                                 autoplay
+                                crossorigin="anonymous"
                                 class="h-full w-full object-contain"
                                 :src="currentLesson.video_url || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'"
                                 @loadedmetadata="onVideoLoaded"
                                 @timeupdate="onTimeUpdate"
                                 @ended="onVideoEnded"
                             >
+                                <track
+                                    v-for="sub in (currentLesson.subtitles || [])"
+                                    :key="sub.id"
+                                    kind="subtitles"
+                                    :label="sub.label"
+                                    :srclang="sub.language"
+                                    :src="sub.file_url"
+                                    :default="sub.is_default"
+                                />
                                 متصفحك لا يدعم مشغل الفيديو.
                             </video>
                         </div>
@@ -294,6 +347,64 @@ function setPlaybackRate(rate: number) {
                                 >
                                     {{ rate }}x
                                 </button>
+                            </div>
+
+                            <!-- Subtitle (CC) Selector -->
+                            <div v-if="currentLesson.type === 'video' && currentLesson.subtitles && currentLesson.subtitles.length > 0" class="relative">
+                                <button
+                                    @click="showCcMenu = !showCcMenu"
+                                    :class="[
+                                        'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-bold transition shadow-sm',
+                                        selectedSubtitleLang !== 'off'
+                                            ? 'border-primary bg-primary text-white'
+                                            : 'border-slate-700 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700'
+                                    ]"
+                                    title="الترجمة المصاحبة (Subtitles / Closed Captions)"
+                                >
+                                    <span class="rounded bg-black/30 px-1 py-0.5 text-[9px] font-black tracking-wider uppercase">CC</span>
+                                    <span>{{ selectedSubtitleLang === 'off' ? 'الترجمة' : (currentLesson.subtitles.find(s => s.language === selectedSubtitleLang)?.label || selectedSubtitleLang) }}</span>
+                                    <svg class="h-3 w-3 transition-transform" :class="{ 'rotate-180': showCcMenu }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+
+                                <!-- Subtitle Dropdown Menu -->
+                                <div
+                                    v-if="showCcMenu"
+                                    class="absolute bottom-full mb-2 start-0 z-30 min-w-44 rounded-xl border border-slate-700 bg-slate-900/95 p-1.5 shadow-2xl backdrop-blur-md"
+                                >
+                                    <div class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800 mb-1">
+                                        الترجمة المصاحبة (Subtitles)
+                                    </div>
+                                    <button
+                                        type="button"
+                                        @click="applySubtitle('off')"
+                                        :class="[
+                                            'flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-medium text-start transition',
+                                            selectedSubtitleLang === 'off' ? 'bg-primary text-white font-bold' : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                                        ]"
+                                    >
+                                        <span>إيقاف الترجمة (Off)</span>
+                                        <svg v-if="selectedSubtitleLang === 'off'" class="h-3.5 w-3.5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                    <button
+                                        v-for="sub in currentLesson.subtitles"
+                                        :key="sub.id"
+                                        type="button"
+                                        @click="applySubtitle(sub.language)"
+                                        :class="[
+                                            'flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-medium text-start transition',
+                                            selectedSubtitleLang === sub.language ? 'bg-primary text-white font-bold' : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                                        ]"
+                                    >
+                                        <span>{{ sub.label }}</span>
+                                        <svg v-if="selectedSubtitleLang === sub.language" class="h-3.5 w-3.5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
