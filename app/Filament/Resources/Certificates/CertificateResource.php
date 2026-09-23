@@ -1,0 +1,79 @@
+<?php
+
+namespace App\Filament\Resources\Certificates;
+
+use App\Filament\Resources\Certificates\Pages\ListCertificates;
+use App\Filament\Resources\Certificates\Pages\ViewCertificate;
+use App\Filament\Resources\Certificates\Schemas\CertificateForm;
+use App\Filament\Resources\Certificates\Schemas\CertificateInfolist;
+use App\Filament\Resources\Certificates\Tables\CertificatesTable;
+use App\Models\Certificate;
+use BackedEnum;
+use UnitEnum;
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+
+class CertificateResource extends Resource
+{
+    protected static ?string $model = Certificate::class;
+
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentCheck;
+
+    protected static ?string $recordTitleAttribute = 'certificate_code';
+
+    protected static string|UnitEnum|null $navigationGroup = 'الطلاب والشهادات';
+
+    protected static ?string $navigationLabel = 'الشهادات المعتمدة (Certificates)';
+
+    protected static ?string $modelLabel = 'شهادة إتمام';
+
+    protected static ?string $pluralModelLabel = 'الشهادات الصادرة';
+
+    protected static ?int $navigationSort = 5;
+
+    public static function form(Schema $schema): Schema
+    {
+        return CertificateForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return CertificateInfolist::configure($schema);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return CertificatesTable::configure($table);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        if (auth()->check() && ! auth()->user()->hasRole('admin')) {
+            $query->where('instructor_id', auth()->id());
+        }
+
+        return $query;
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => ListCertificates::route('/'),
+            'view' => ViewCertificate::route('/{record}'),
+        ];
+    }
+
+    public static function getRecordRouteBindingEloquentQuery(): Builder
+    {
+        return parent::getRecordRouteBindingEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
+    }
+}

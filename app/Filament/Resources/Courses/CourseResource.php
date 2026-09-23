@@ -11,6 +11,7 @@ use App\Filament\Resources\Courses\Schemas\CourseInfolist;
 use App\Filament\Resources\Courses\Tables\CoursesTable;
 use App\Models\Course;
 use BackedEnum;
+use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -22,15 +23,19 @@ class CourseResource extends Resource
 {
     protected static ?string $model = Course::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedAcademicCap;
 
     protected static ?string $recordTitleAttribute = 'title';
+
+    protected static string|UnitEnum|null $navigationGroup = 'المناهج والمقررات';
 
     protected static ?string $navigationLabel = 'المقررات الدراسية (Courses)';
 
     protected static ?string $modelLabel = 'مقرر دراسي';
 
     protected static ?string $pluralModelLabel = 'المقررات الدراسية';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Schema $schema): Schema
     {
