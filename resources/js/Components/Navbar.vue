@@ -26,7 +26,7 @@ function performSearch() {
                         class="h-10 w-10 object-contain transition-transform group-hover:scale-105"
                     />
                     <div class="flex flex-col -space-y-1">
-                        <span class="text-2xl font-black tracking-tight text-[#0a3d7a] font-arabic">
+                        <span class="text-2xl font-black tracking-tight text-[#042F2E] font-arabic">
                             نهج
                         </span>
                         <span class="text-[10px] font-bold tracking-wider text-primary uppercase">

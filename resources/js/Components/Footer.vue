@@ -10,7 +10,7 @@ import { Link } from '@inertiajs/vue3';
                     <Link :href="route('home')" class="flex items-center gap-2.5">
                         <img src="/images/nahj-icon.png" alt="شعار نهج" class="h-9 w-9 object-contain" />
                         <div class="flex flex-col -space-y-1">
-                            <span class="text-xl font-black text-[#0a3d7a] font-arabic">
+                            <span class="text-xl font-black text-[#042F2E] font-arabic">
                                 نهج
                             </span>
                             <span class="text-[9px] font-bold tracking-wider text-primary uppercase">
