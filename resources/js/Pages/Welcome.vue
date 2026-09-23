@@ -3,6 +3,9 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import Navbar from '@/Components/Navbar.vue';
 import CourseCard from '@/Components/CourseCard.vue';
 import Footer from '@/Components/Footer.vue';
+import { useTranslation } from '@/Composables/useTranslation';
+
+const { t, locale } = useTranslation();
 
 interface Category {
     id: number;
@@ -59,7 +62,7 @@ function filterByCategory(slug?: string) {
 </script>
 
 <template>
-    <Head title="منصة نهج - تعلّم مهارات المستقبل واحصل على شهادات معتمدة" />
+    <Head :title="locale === 'ar' ? 'منصة نهج - تعلّم مهارات المستقبل واحصل على شهادات معتمدة' : 'Nahj Platform - Learn Future Skills & Earn Verified Certificates'" />
 
     <div class="min-h-screen bg-slate-50 font-sans text-slate-800">
         <Navbar />
@@ -71,15 +74,15 @@ function filterByCategory(slug?: string) {
                     <div>
                         <div class="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary-50 px-3 py-1 text-xs font-bold text-primary">
                             <span class="flex h-2 w-2 rounded-full bg-primary animate-pulse" />
-                            مساقات جديدة معتمدة في الذكاء الاصطناعي 2026
+                            {{ t('hero_badge') }}
                         </div>
 
                         <h1 class="mt-4 text-3xl font-black tracking-tight text-slate-900 sm:text-5xl lg:leading-tight">
-                            تعلّم مهارات المستقبل واحصل على <span class="text-primary">شهادات معتمدة عالمياً</span>
+                            {{ t('hero_title_prefix') }} <span class="text-primary">{{ t('hero_title_highlight') }}</span>
                         </h1>
 
                         <p class="mt-4 text-base text-slate-600 leading-relaxed sm:text-lg">
-                            انضم لملايين الطلاب حول العالم وطوّر مسيرتك المهنية عبر دورات وتخصصات مقدمة من أفضل الخبراء والجامعات الرائدة.
+                            {{ t('hero_description') }}
                         </p>
 
                         <div class="mt-8 flex flex-wrap items-center gap-4">
@@ -87,14 +90,14 @@ function filterByCategory(slug?: string) {
                                 :href="route('register')"
                                 class="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-primary/25 transition hover:bg-primary-hover hover:shadow-xl"
                             >
-                                ابدأ التعلم مجاناً الآن
+                                {{ t('start_learning_free') }}
                             </Link>
 
                             <a
                                 href="#courses-catalog"
                                 class="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3.5 text-base font-bold text-slate-700 transition hover:bg-slate-50"
                             >
-                                تصفح كافة الدورات
+                                {{ t('browse_all_courses') }}
                             </a>
                         </div>
 
@@ -102,15 +105,15 @@ function filterByCategory(slug?: string) {
                         <div class="mt-10 grid grid-cols-3 gap-6 border-t border-slate-100 pt-6">
                             <div>
                                 <p class="text-2xl font-black text-slate-900">100%</p>
-                                <p class="text-xs text-slate-500">شهادات قابلة للتحقق</p>
+                                <p class="text-xs text-slate-500">{{ t('stat_verifiable_certs') }}</p>
                             </div>
                             <div>
                                 <p class="text-2xl font-black text-slate-900">+50</p>
-                                <p class="text-xs text-slate-500">مشروع تطبيقي عملي</p>
+                                <p class="text-xs text-slate-500">{{ t('stat_hands_on_projects') }}</p>
                             </div>
                             <div>
                                 <p class="text-2xl font-black text-slate-900">24/7</p>
-                                <p class="text-xs text-slate-500">تعلّم بالسرعة التي تناسبك</p>
+                                <p class="text-xs text-slate-500">{{ t('stat_self_paced') }}</p>
                             </div>
                         </div>
                     </div>
@@ -125,9 +128,9 @@ function filterByCategory(slug?: string) {
                             />
                             <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
                             <div class="absolute bottom-6 start-6 end-6 text-white">
-                                <span class="rounded bg-primary px-2 py-0.5 text-xs font-bold">تخصص مميز</span>
-                                <h3 class="mt-1 text-lg font-bold">الشبكات العصبية والتعلم العميق</h3>
-                                <p class="text-xs text-slate-300">مقدمة من الدكتور أندرو إنغ ومعهد DeepLearning.AI</p>
+                                <span class="rounded bg-primary px-2 py-0.5 text-xs font-bold">{{ t('featured_specialization') }}</span>
+                                <h3 class="mt-1 text-lg font-bold">{{ locale === 'ar' ? 'الشبكات العصبية والتعلم العميق' : 'Neural Networks and Deep Learning' }}</h3>
+                                <p class="text-xs text-slate-300">{{ locale === 'ar' ? 'مقدمة من الدكتور أندرو إنغ ومعهد DeepLearning.AI' : 'Presented by Dr. Andrew Ng & DeepLearning.AI' }}</p>
                             </div>
                         </div>
                     </div>
@@ -142,16 +145,18 @@ function filterByCategory(slug?: string) {
                 <div class="flex flex-col justify-between gap-4 md:flex-row md:items-end">
                     <div>
                         <h2 class="text-2xl font-black text-slate-900 sm:text-3xl">
-                            استكشف الكتالوج الأكاديمي
+                            {{ t('catalog_title') }}
                         </h2>
                         <p class="mt-1 text-sm text-slate-600">
-                            اختر من بين أحدث المساقات المتاحة وابدأ في بناء مهاراتك اليوم.
+                            {{ t('catalog_subtitle') }}
                         </p>
                     </div>
 
                     <div v-if="filters.search" class="text-xs text-slate-500">
-                        نتائج البحث عن: <strong class="text-slate-800">"{{ filters.search }}"</strong>
-                        <Link :href="route('home')" class="ms-2 text-primary underline">مسح البحث</Link>
+                        {{ t('filter_search_results') }}: <strong class="text-slate-800">"{{ filters.search }}"</strong>
+                        <Link :href="route('home')" class="ms-2 text-primary underline">
+                            {{ locale === 'ar' ? 'مسح البحث' : 'Clear search' }}
+                        </Link>
                     </div>
                 </div>
 
@@ -166,7 +171,7 @@ function filterByCategory(slug?: string) {
                                 : 'bg-white text-slate-700 border border-slate-200 hover:border-primary/40'
                         ]"
                     >
-                        الكل (All)
+                        {{ t('all_categories') }}
                     </button>
 
                     <button
@@ -194,22 +199,22 @@ function filterByCategory(slug?: string) {
                     />
                 </div>
 
-                <!-- Empty State (Rule 03 compliant) -->
+                <!-- Empty State -->
                 <div v-else class="my-16 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white p-12 text-center">
                     <div class="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-400">
                         <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                         </svg>
                     </div>
-                    <h3 class="mt-4 text-base font-bold text-slate-900">لم يتم العثور على مقررات مطابقة</h3>
+                    <h3 class="mt-4 text-base font-bold text-slate-900">{{ t('no_courses_found') }}</h3>
                     <p class="mt-1 max-w-sm text-xs text-slate-500">
-                        جرّب اختيار تصنيف آخر أو البحث عن مصطلح مختلف في شريط البحث.
+                        {{ locale === 'ar' ? 'جرّب اختيار تصنيف آخر أو البحث عن مصطلح مختلف في شريط البحث.' : 'Try selecting another category or searching for different terms.' }}
                     </p>
                     <button
                         @click="filterByCategory(undefined)"
                         class="mt-5 rounded-lg bg-primary px-4 py-2 text-xs font-bold text-white shadow hover:bg-primary-hover"
                     >
-                        عرض كافة المقررات
+                        {{ t('browse_all_courses') }}
                     </button>
                 </div>
             </div>

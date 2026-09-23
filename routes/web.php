@@ -3,9 +3,13 @@
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LessonController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+// Internationalization & Locale Switch
+Route::post('/locale', [LocaleController::class, 'update'])->name('locale.update');
 
 // Public Catalog & Homepage
 Route::get('/', [HomeController::class, 'index'])->name('home');

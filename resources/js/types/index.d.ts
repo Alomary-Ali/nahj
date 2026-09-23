@@ -152,7 +152,11 @@ export type PageProps<
 > = T & {
     auth: {
         user: User;
+        can_access_admin?: boolean;
     };
+    locale?: string;
+    direction?: 'rtl' | 'ltr';
+    translations?: Record<string, string>;
     flash?: {
         success?: string | null;
         error?: string | null;

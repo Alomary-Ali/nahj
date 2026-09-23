@@ -30,10 +30,20 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $locale = app()->getLocale();
+        $translationsPath = base_path("lang/{$locale}.json");
+        $translations = file_exists($translationsPath)
+            ? json_decode(file_get_contents($translationsPath), true) ?? []
+            : [];
+
         return [
             ...parent::share($request),
+            'locale' => $locale,
+            'direction' => $locale === 'ar' ? 'rtl' : 'ltr',
+            'translations' => $translations,
             'auth' => [
                 'user' => $request->user(),
+                'can_access_admin' => $request->user() ? ($request->user()->hasAnyRole(['admin', 'instructor']) || app()->environment('local')) : false,
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

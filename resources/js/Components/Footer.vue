@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+import { useTranslation } from '@/Composables/useTranslation';
+
+const { t, locale, setLocale } = useTranslation();
 </script>
 
 <template>
@@ -19,42 +22,61 @@ import { Link } from '@inertiajs/vue3';
                         </div>
                     </Link>
                     <p class="mt-3 max-w-sm text-xs leading-relaxed text-slate-500">
-                        نهج - منصة تعليمية رائدة نحو مستقبلك، تقدم مساقات وتخصصات معتمدة بشراكة مع كبرى الجامعات والخبراء لنقل المعرفة وبناء المهارات للمستقبل.
+                        {{ t('platform_tagline') }}
                     </p>
                 </div>
 
                 <div>
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-900">المقررات والتخصصات</h4>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-900">{{ t('courses_and_specializations') }}</h4>
                     <ul class="mt-3 space-y-2 text-xs text-slate-600">
-                        <li><a href="#" class="hover:text-primary">الذكاء الاصطناعي</a></li>
-                        <li><a href="#" class="hover:text-primary">علم البيانات</a></li>
-                        <li><a href="#" class="hover:text-primary">علوم الحاسوب</a></li>
-                        <li><a href="#" class="hover:text-primary">تصميم تجربة المستخدم</a></li>
+                        <li><a href="#" class="hover:text-primary">{{ locale === 'ar' ? 'الذكاء الاصطناعي' : 'Artificial Intelligence' }}</a></li>
+                        <li><a href="#" class="hover:text-primary">{{ locale === 'ar' ? 'علم البيانات' : 'Data Science' }}</a></li>
+                        <li><a href="#" class="hover:text-primary">{{ locale === 'ar' ? 'علوم الحاسوب' : 'Computer Science' }}</a></li>
+                        <li><a href="#" class="hover:text-primary">{{ locale === 'ar' ? 'تصميم تجربة المستخدم' : 'UI/UX Design' }}</a></li>
                     </ul>
                 </div>
 
                 <div>
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-900">المجتمع والشركاء</h4>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-900">{{ t('community_and_partners') }}</h4>
                     <ul class="mt-3 space-y-2 text-xs text-slate-600">
-                        <li><a href="#" class="hover:text-primary">انضم كمدرب</a></li>
-                        <li><a href="#" class="hover:text-primary">نهج للأعمال (Nahj for Business)</a></li>
-                        <li><a href="#" class="hover:text-primary">شراكات الجامعات</a></li>
+                        <li><a href="#" class="hover:text-primary">{{ t('become_instructor') }}</a></li>
+                        <li><a href="#" class="hover:text-primary">{{ t('nahj_for_business') }}</a></li>
                     </ul>
                 </div>
 
                 <div>
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-900">الدعم والمساعدة</h4>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-900">{{ locale === 'ar' ? 'الدعم والاعتماد' : 'Support & Verification' }}</h4>
                     <ul class="mt-3 space-y-2 text-xs text-slate-600">
-                        <li><a href="#" class="hover:text-primary">مركز المساعدة</a></li>
-                        <li><a href="#" class="hover:text-primary">التحقق من الشهادات</a></li>
-                        <li><a href="#" class="hover:text-primary">الشروط والأحكام</a></li>
-                        <li><a href="#" class="hover:text-primary">سياسة الخصوصية</a></li>
+                        <li><Link :href="route('certificates.verify', 'demo')" class="hover:text-primary">{{ t('verify_certificate') }}</Link></li>
+                        <li><a href="#" class="hover:text-primary">{{ locale === 'ar' ? 'الشروط والأحكام' : 'Terms & Conditions' }}</a></li>
+                        <li><a href="#" class="hover:text-primary">{{ locale === 'ar' ? 'سياسة الخصوصية' : 'Privacy Policy' }}</a></li>
                     </ul>
                 </div>
             </div>
 
-            <div class="mt-10 border-t border-slate-100 pt-6 text-center text-xs text-slate-400">
-                &copy; {{ new Date().getFullYear() }} نهج - Nahj. جميع الحقوق محفوظة.
+            <div class="mt-10 flex flex-col items-center justify-between gap-4 border-t border-slate-100 pt-6 sm:flex-row text-xs text-slate-400">
+                <p>
+                    {{ t('copyright', { year: new Date().getFullYear() }) }}
+                </p>
+
+                <!-- Language Selector in Footer -->
+                <div class="flex items-center gap-2">
+                    <button
+                        @click="setLocale('ar')"
+                        class="rounded px-2 py-1 font-semibold transition"
+                        :class="locale === 'ar' ? 'bg-primary-50 text-primary font-bold' : 'hover:text-slate-600'"
+                    >
+                        العربية
+                    </button>
+                    <span>|</span>
+                    <button
+                        @click="setLocale('en')"
+                        class="rounded px-2 py-1 font-semibold transition"
+                        :class="locale === 'en' ? 'bg-primary-50 text-primary font-bold' : 'hover:text-slate-600'"
+                    >
+                        English
+                    </button>
+                </div>
             </div>
         </div>
     </footer>
