@@ -24,11 +24,18 @@ const submit = () => {
 
 <template>
     <GuestLayout>
-        <Head title="Register" />
+        <Head title="إنشاء حساب جديد" />
 
-        <form @submit.prevent="submit">
+        <div class="mb-6 text-center">
+            <h1 class="text-2xl font-black text-slate-900 font-arabic">إنشاء حساب جديد</h1>
+            <p class="mt-1 text-xs text-slate-500">
+                انضم إلى نخبة الطلاب والمتعلمين في نهج وابدأ رحلتك الأكاديمية
+            </p>
+        </div>
+
+        <form @submit.prevent="submit" class="space-y-4">
             <div>
-                <InputLabel for="name" value="Name" />
+                <InputLabel for="name" value="الاسم الكامل" />
 
                 <TextInput
                     id="name"
@@ -38,13 +45,14 @@ const submit = () => {
                     required
                     autofocus
                     autocomplete="name"
+                    placeholder="مثال: أحمد عبد الله"
                 />
 
-                <InputError class="mt-2" :message="form.errors.name" />
+                <InputError class="mt-1" :message="form.errors.name" />
             </div>
 
-            <div class="mt-4">
-                <InputLabel for="email" value="Email" />
+            <div>
+                <InputLabel for="email" value="البريد الإلكتروني" />
 
                 <TextInput
                     id="email"
@@ -53,13 +61,14 @@ const submit = () => {
                     v-model="form.email"
                     required
                     autocomplete="username"
+                    placeholder="name@example.com"
                 />
 
-                <InputError class="mt-2" :message="form.errors.email" />
+                <InputError class="mt-1" :message="form.errors.email" />
             </div>
 
-            <div class="mt-4">
-                <InputLabel for="password" value="Password" />
+            <div>
+                <InputLabel for="password" value="كلمة المرور" />
 
                 <TextInput
                     id="password"
@@ -68,16 +77,14 @@ const submit = () => {
                     v-model="form.password"
                     required
                     autocomplete="new-password"
+                    placeholder="8 رموز أو أكثر"
                 />
 
-                <InputError class="mt-2" :message="form.errors.password" />
+                <InputError class="mt-1" :message="form.errors.password" />
             </div>
 
-            <div class="mt-4">
-                <InputLabel
-                    for="password_confirmation"
-                    value="Confirm Password"
-                />
+            <div>
+                <InputLabel for="password_confirmation" value="تأكيد كلمة المرور" />
 
                 <TextInput
                     id="password_confirmation"
@@ -86,29 +93,30 @@ const submit = () => {
                     v-model="form.password_confirmation"
                     required
                     autocomplete="new-password"
+                    placeholder="أعد إدخال كلمة المرور"
                 />
 
-                <InputError
-                    class="mt-2"
-                    :message="form.errors.password_confirmation"
-                />
+                <InputError class="mt-1" :message="form.errors.password_confirmation" />
             </div>
 
-            <div class="mt-4 flex items-center justify-end">
-                <Link
-                    :href="route('login')"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:text-gray-400 dark:hover:text-gray-100 dark:focus:ring-offset-gray-800"
-                >
-                    Already registered?
-                </Link>
-
+            <div class="pt-2">
                 <PrimaryButton
-                    class="ms-4"
-                    :class="{ 'opacity-25': form.processing }"
+                    class="w-full py-3"
+                    :class="{ 'opacity-50 cursor-not-allowed': form.processing }"
                     :disabled="form.processing"
                 >
-                    Register
+                    {{ form.processing ? 'جاري إنشاء الحساب...' : 'إنشاء الحساب وبدء التعلّم' }}
                 </PrimaryButton>
+            </div>
+
+            <div class="mt-6 border-t border-slate-100 pt-4 text-center text-xs text-slate-500">
+                <span>لديك حساب بالفعل؟</span>
+                <Link
+                    :href="route('login')"
+                    class="ms-1 font-bold text-primary hover:underline"
+                >
+                    تسجيل الدخول
+                </Link>
             </div>
         </form>
     </GuestLayout>

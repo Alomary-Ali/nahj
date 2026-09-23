@@ -21,38 +21,40 @@ const verificationLinkSent = computed(
 
 <template>
     <GuestLayout>
-        <Head title="Email Verification" />
+        <Head title="تأكيد البريد الإلكتروني" />
 
-        <div class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-            Thanks for signing up! Before getting started, could you verify your
-            email address by clicking on the link we just emailed to you? If you
-            didn't receive the email, we will gladly send you another.
+        <div class="mb-6 text-center">
+            <h1 class="text-2xl font-black text-slate-900 font-arabic">تأكيد البريد الإلكتروني</h1>
+            <p class="mt-2 text-xs text-slate-500 leading-relaxed">
+                شكراً لانضمامك إلى نهج! قبل البدء، يرجى تأكيد بريدك الإلكتروني بالنقر على الرابط الذي أرسلناه إليك. إذا لم يصلك البريد، يسعدنا إعادة إرساله لك فوراً.
+            </p>
         </div>
 
         <div
-            class="mb-4 text-sm font-medium text-green-600 dark:text-green-400"
+            class="mb-4 rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-xs font-medium text-emerald-800"
             v-if="verificationLinkSent"
         >
-            A new verification link has been sent to the email address you
-            provided during registration.
+            تم إرسال رابط تأكيد جديد إلى عنوان بريدك الإلكتروني المسجل.
         </div>
 
         <form @submit.prevent="submit">
-            <div class="mt-4 flex items-center justify-between">
+            <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <PrimaryButton
-                    :class="{ 'opacity-25': form.processing }"
+                    class="w-full sm:w-auto"
+                    :class="{ 'opacity-50 cursor-not-allowed': form.processing }"
                     :disabled="form.processing"
                 >
-                    Resend Verification Email
+                    {{ form.processing ? 'جاري الإرسال...' : 'إعادة إرسال رابط التأكيد' }}
                 </PrimaryButton>
 
                 <Link
                     :href="route('logout')"
                     method="post"
                     as="button"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:text-gray-400 dark:hover:text-gray-100 dark:focus:ring-offset-gray-800"
-                    >Log Out</Link
+                    class="text-xs font-bold text-slate-500 hover:text-red-600 transition"
                 >
+                    تسجيل الخروج
+                </Link>
             </div>
         </form>
     </GuestLayout>

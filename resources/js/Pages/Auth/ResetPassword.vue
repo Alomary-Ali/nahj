@@ -29,11 +29,18 @@ const submit = () => {
 
 <template>
     <GuestLayout>
-        <Head title="Reset Password" />
+        <Head title="تعيين كلمة المرور الجديدة" />
 
-        <form @submit.prevent="submit">
+        <div class="mb-6 text-center">
+            <h1 class="text-2xl font-black text-slate-900 font-arabic">تعيين كلمة المرور الجديدة</h1>
+            <p class="mt-1 text-xs text-slate-500">
+                أدخل كلمة المرور الجديدة لحسابك لتتمكن من تسجيل الدخول
+            </p>
+        </div>
+
+        <form @submit.prevent="submit" class="space-y-4">
             <div>
-                <InputLabel for="email" value="Email" />
+                <InputLabel for="email" value="البريد الإلكتروني" />
 
                 <TextInput
                     id="email"
@@ -45,11 +52,11 @@ const submit = () => {
                     autocomplete="username"
                 />
 
-                <InputError class="mt-2" :message="form.errors.email" />
+                <InputError class="mt-1" :message="form.errors.email" />
             </div>
 
-            <div class="mt-4">
-                <InputLabel for="password" value="Password" />
+            <div>
+                <InputLabel for="password" value="كلمة المرور الجديدة" />
 
                 <TextInput
                     id="password"
@@ -58,15 +65,16 @@ const submit = () => {
                     v-model="form.password"
                     required
                     autocomplete="new-password"
+                    placeholder="8 رموز أو أكثر"
                 />
 
-                <InputError class="mt-2" :message="form.errors.password" />
+                <InputError class="mt-1" :message="form.errors.password" />
             </div>
 
-            <div class="mt-4">
+            <div>
                 <InputLabel
                     for="password_confirmation"
-                    value="Confirm Password"
+                    value="تأكيد كلمة المرور الجديدة"
                 />
 
                 <TextInput
@@ -76,20 +84,22 @@ const submit = () => {
                     v-model="form.password_confirmation"
                     required
                     autocomplete="new-password"
+                    placeholder="أعد إدخال كلمة المرور"
                 />
 
                 <InputError
-                    class="mt-2"
+                    class="mt-1"
                     :message="form.errors.password_confirmation"
                 />
             </div>
 
-            <div class="mt-4 flex items-center justify-end">
+            <div class="pt-2">
                 <PrimaryButton
-                    :class="{ 'opacity-25': form.processing }"
+                    class="w-full py-3"
+                    :class="{ 'opacity-50 cursor-not-allowed': form.processing }"
                     :disabled="form.processing"
                 >
-                    Reset Password
+                    {{ form.processing ? 'جاري الحفظ...' : 'حفظ كلمة المرور وتسجيل الدخول' }}
                 </PrimaryButton>
             </div>
         </form>
