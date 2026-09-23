@@ -41,39 +41,35 @@ const closeModal = () => {
 </script>
 
 <template>
-    <section class="space-y-6">
+    <section class="space-y-4">
         <header>
-            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-                Delete Account
+            <h2 class="text-base font-bold text-red-600 font-arabic">
+                حذف الحساب نهائياً
             </h2>
 
-            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                Once your account is deleted, all of its resources and data will
-                be permanently deleted. Before deleting your account, please
-                download any data or information that you wish to retain.
+            <p class="mt-1 text-xs text-slate-500">
+                بمجرد حذف حسابك، سيتم مسح كافة بياناتك وسجلات تقدمك والشهادات الصادرة نهائياً دون إمكانية للاسترجاع.
             </p>
         </header>
 
-        <DangerButton @click="confirmUserDeletion">Delete Account</DangerButton>
+        <DangerButton @click="confirmUserDeletion">
+            حذف حسابي من المنصة
+        </DangerButton>
 
         <Modal :show="confirmingUserDeletion" @close="closeModal">
             <div class="p-6">
-                <h2
-                    class="text-lg font-medium text-gray-900 dark:text-gray-100"
-                >
-                    Are you sure you want to delete your account?
+                <h2 class="text-base font-bold text-slate-900 font-arabic">
+                    هل أنت متأكد من رغبتك في حذف الحساب نهائياً؟
                 </h2>
 
-                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    Once your account is deleted, all of its resources and data
-                    will be permanently deleted. Please enter your password to
-                    confirm you would like to permanently delete your account.
+                <p class="mt-2 text-xs text-slate-500 leading-relaxed">
+                    هذا الإجراء نهائي ولا يمكن التراجع عنه. يرجى إدخال كلمة المرور لتأكيد الحذف النهائي لحسابك.
                 </p>
 
-                <div class="mt-6">
+                <div class="mt-4">
                     <InputLabel
                         for="password"
-                        value="Password"
+                        value="كلمة المرور"
                         class="sr-only"
                     />
 
@@ -82,26 +78,25 @@ const closeModal = () => {
                         ref="passwordInput"
                         v-model="form.password"
                         type="password"
-                        class="mt-1 block w-3/4"
-                        placeholder="Password"
+                        class="mt-1 block w-full"
+                        placeholder="أدخل كلمة المرور للتأكيد"
                         @keyup.enter="deleteUser"
                     />
 
-                    <InputError :message="form.errors.password" class="mt-2" />
+                    <InputError :message="form.errors.password" class="mt-1" />
                 </div>
 
-                <div class="mt-6 flex justify-end">
+                <div class="mt-6 flex justify-end gap-3">
                     <SecondaryButton @click="closeModal">
-                        Cancel
+                        إلغاء الأمر
                     </SecondaryButton>
 
                     <DangerButton
-                        class="ms-3"
-                        :class="{ 'opacity-25': form.processing }"
+                        :class="{ 'opacity-50 cursor-not-allowed': form.processing }"
                         :disabled="form.processing"
                         @click="deleteUser"
                     >
-                        Delete Account
+                        {{ form.processing ? 'جاري الحذف...' : 'تأكيد الحذف النهائي' }}
                     </DangerButton>
                 </div>
             </div>

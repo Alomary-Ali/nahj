@@ -111,7 +111,7 @@ function copyVerificationLink() {
                             <div class="flex items-center gap-3">
                                 <img src="/images/nahj-icon.png" alt="منصة نهج" class="h-12 w-12 object-contain" />
                                 <div class="flex items-baseline gap-2">
-                                    <span class="text-3xl font-black tracking-tight text-[#0a3d7a] font-arabic">
+                                    <span class="text-3xl font-black tracking-tight text-[#042F2E] font-arabic">
                                         نهج
                                     </span>
                                     <span class="text-xs font-bold tracking-widest text-primary uppercase">
