@@ -14,27 +14,41 @@ export default {
         extend: {
             colors: {
                 primary: {
-                    50: '#EBF3FF',
-                    100: '#D6E4FF',
-                    200: '#ADC8FF',
-                    300: '#85A5FF',
-                    400: '#597EF7',
-                    500: '#2F54EB',
-                    600: '#0056D2', // Coursera Official Primary Blue
-                    700: '#00419E', // Hover
-                    800: '#002C6E',
-                    900: '#001944',
-                    DEFAULT: '#0056D2',
-                    hover: '#00419E',
+                    50: '#F0FDFA',
+                    100: '#CCFBF1',
+                    200: '#99F6E4',
+                    300: '#5EEAD4',
+                    400: '#2DD4BF',
+                    500: '#14B8A6',
+                    600: '#0D9488',
+                    700: '#0F766E', // Signature Nahj Emerald Petrol
+                    800: '#115E59', // Hover
+                    900: '#134E4A',
+                    950: '#042F2E',
+                    DEFAULT: '#0F766E',
+                    hover: '#115E59',
+                },
+                gold: {
+                    50: '#FFFBEB',
+                    100: '#FEF3C7',
+                    200: '#FDE68A',
+                    300: '#FCD34D',
+                    400: '#FBBF24',
+                    500: '#F59E0B',
+                    600: '#D97706', // Royal Academic Gold
+                    700: '#B45309',
+                    800: '#92400E',
+                    DEFAULT: '#D97706',
                 },
                 slate: {
                     850: '#151F32',
                 },
                 academic: {
-                    success: '#0F8458',
+                    success: '#0D9488',
                     warning: '#D97706',
+                    gold: '#D97706',
                     danger: '#DC2626',
-                    info: '#0056D2',
+                    info: '#0F766E',
                 },
             },
             fontFamily: {
