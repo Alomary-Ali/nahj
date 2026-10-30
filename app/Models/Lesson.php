@@ -79,4 +79,9 @@ class Lesson extends Model
     {
         return $this->hasMany(LessonSubtitle::class);
     }
+
+    public function resources(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(LessonResource::class)->orderBy('sort_order', 'asc');
+    }
 }

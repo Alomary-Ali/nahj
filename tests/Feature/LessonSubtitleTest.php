@@ -53,6 +53,9 @@ class LessonSubtitleTest extends TestCase
             'enrolled_at' => now(),
         ]);
 
+        // Ensure clean slate for test subtitles
+        $lesson->subtitles()->delete();
+
         LessonSubtitle::create([
             'lesson_id' => $lesson->id,
             'language' => 'ar',

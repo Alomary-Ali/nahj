@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed, nextTick, watch } from 'vue';
 import { Head, Link, useForm, usePage, router } from '@inertiajs/vue3';
 import type { DiscussionThread, LessonNote, PageProps } from '@/types';
+import { parseVttContent, formatVttTime, type VttCue } from '@/Utils/vttParser';
 
 interface LessonSubtitle {
     id: number;
@@ -10,6 +11,17 @@ interface LessonSubtitle {
     label: string;
     file_url: string;
     is_default?: boolean;
+}
+
+interface LessonResource {
+    id: number;
+    lesson_id: number;
+    title: string;
+    file_path?: string | null;
+    external_url?: string | null;
+    file_type: string;
+    file_size_human?: string | null;
+    sort_order: number;
 }
 
 interface Lesson {
@@ -22,6 +34,7 @@ interface Lesson {
     video_url?: string;
     is_preview: boolean;
     subtitles?: LessonSubtitle[];
+    resources?: LessonResource[];
 }
 
 interface Module {
@@ -59,11 +72,72 @@ const props = defineProps<{
 const page = usePage<PageProps>();
 const isTheaterMode = ref(false);
 const showMobileDrawer = ref(false);
-const activeTab = ref<'overview' | 'notes' | 'discussions'>('overview');
+const activeTab = ref<'overview' | 'notes' | 'discussions' | 'transcript'>('overview');
 const videoPlaybackRate = ref(1.0);
 const videoPlayerRef = ref<HTMLVideoElement | null>(null);
 const showCcMenu = ref(false);
 const selectedSubtitleLang = ref<string>('off');
+
+// Interactive Synchronized Transcript State
+const transcriptCues = ref<VttCue[]>([]);
+const isLoadingTranscript = ref(false);
+const transcriptSearchQuery = ref('');
+const autoScrollTranscript = ref(true);
+const transcriptLang = ref<string>('ar');
+const currentActiveCueId = ref<string | null>(null);
+const currentVideoTime = ref<number>(0);
+
+function loadTranscript(lang: string) {
+    transcriptLang.value = lang;
+    const sub = props.currentLesson.subtitles?.find(s => s.language === lang) || props.currentLesson.subtitles?.[0];
+    if (!sub || !sub.file_url) {
+        transcriptCues.value = [];
+        return;
+    }
+
+    isLoadingTranscript.value = true;
+    fetch(sub.file_url)
+        .then(res => res.text())
+        .then(text => {
+            transcriptCues.value = parseVttContent(text);
+        })
+        .catch(err => {
+            console.error('Failed to load transcript:', err);
+            transcriptCues.value = [];
+        })
+        .finally(() => {
+            isLoadingTranscript.value = false;
+        });
+}
+
+function jumpToCue(cue: VttCue) {
+    seekTo(cue.startTime);
+    currentActiveCueId.value = cue.id;
+}
+
+const filteredTranscriptCues = computed(() => {
+    if (!transcriptSearchQuery.value.trim()) {
+        return transcriptCues.value;
+    }
+    const query = transcriptSearchQuery.value.toLowerCase().trim();
+    return transcriptCues.value.filter(cue => cue.text.toLowerCase().includes(query));
+});
+
+function highlightMatch(text: string, query: string): string {
+    if (!query.trim()) return text;
+    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escaped})`, 'gi');
+    return text.replace(regex, '<mark class="bg-primary-500/40 text-primary-200 px-1 py-0.5 rounded font-bold">$1</mark>');
+}
+
+watch(activeTab, (newTab) => {
+    if (newTab === 'transcript' && transcriptCues.value.length === 0) {
+        const lang = selectedSubtitleLang.value !== 'off' 
+            ? selectedSubtitleLang.value 
+            : (props.currentLesson.subtitles?.[0]?.language || 'ar');
+        loadTranscript(lang);
+    }
+});
 
 const completedIds = ref<number[]>([...(props.completedLessonIds || [])]);
 const progressPercentage = ref(props.courseProgressPercentage || 0);
@@ -176,7 +250,30 @@ function sendProgressUpdate(seconds: number, duration: number) {
 
 function onTimeUpdate() {
     if (!videoPlayerRef.value) return;
-    const current = Math.floor(videoPlayerRef.value.currentTime);
+    const currentPrecise = videoPlayerRef.value.currentTime;
+    currentVideoTime.value = currentPrecise;
+
+    // Synchronize interactive transcript
+    if (transcriptCues.value.length > 0) {
+        const active = transcriptCues.value.find(cue => currentPrecise >= cue.startTime && currentPrecise < cue.endTime);
+        if (active) {
+            if (active.id !== currentActiveCueId.value) {
+                currentActiveCueId.value = active.id;
+                if (autoScrollTranscript.value && activeTab.value === 'transcript') {
+                    nextTick(() => {
+                        const el = document.getElementById(`cue-${active.id}`);
+                        if (el) {
+                            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    });
+                }
+            }
+        } else {
+            currentActiveCueId.value = null;
+        }
+    }
+
+    const current = Math.floor(currentPrecise);
     const duration = Math.floor(videoPlayerRef.value.duration) || props.currentLesson.duration_seconds;
 
     if (Math.abs(current - lastSavedTime) >= 6) {
@@ -476,12 +573,87 @@ function setPlaybackRate(rate: number) {
                                     {{ discussions?.length || 0 }}
                                 </span>
                             </button>
+                            <button
+                                v-if="currentLesson.subtitles && currentLesson.subtitles.length > 0"
+                                @click="activeTab = 'transcript'"
+                                :class="[
+                                    'pb-3 text-start transition flex items-center gap-2',
+                                    activeTab === 'transcript' ? 'border-b-2 border-primary text-primary' : 'text-slate-400 hover:text-slate-200'
+                                ]"
+                            >
+                                <span>التفريغ النصي المتزامن (Transcript)</span>
+                                <span class="rounded bg-primary/20 px-1.5 py-0.5 text-[10px] font-bold text-primary-300">
+                                    CC
+                                </span>
+                            </button>
                         </div>
 
                         <!-- Overview Tab -->
-                        <div v-if="activeTab === 'overview'" class="py-6 text-sm text-slate-300 leading-relaxed">
-                            <p v-if="currentLesson.content">{{ currentLesson.content }}</p>
-                            <p v-else class="text-xs text-slate-500">لا توجد ملاحظات إضافية لهذا الدرس حالياً.</p>
+                        <div v-if="activeTab === 'overview'" class="py-6 text-sm text-slate-300 leading-relaxed space-y-8">
+                            <div>
+                                <h3 class="text-sm font-bold text-white mb-2">عن هذا الدرس</h3>
+                                <p v-if="currentLesson.content" class="whitespace-pre-line">{{ currentLesson.content }}</p>
+                                <p v-else class="text-xs text-slate-500">لا توجد ملاحظات إضافية لهذا الدرس حالياً.</p>
+                            </div>
+
+                            <!-- Downloadable Lesson Resources & Materials -->
+                            <div v-if="currentLesson.resources && currentLesson.resources.length > 0" class="pt-6 border-t border-slate-800">
+                                <div class="flex items-center gap-2 mb-4">
+                                    <svg class="h-5 w-5 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <h3 class="text-sm font-bold text-white">مواد وملحقات الدرس القابلة للتحميل (Lesson Resources)</h3>
+                                    <span class="rounded-full bg-slate-800 px-2 py-0.5 text-[10px] text-slate-300">{{ currentLesson.resources.length }}</span>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div
+                                        v-for="resource in currentLesson.resources"
+                                        :key="resource.id"
+                                        class="flex items-center justify-between p-3.5 rounded-xl border border-slate-800 bg-slate-900/80 hover:border-slate-700 transition"
+                                    >
+                                        <div class="flex items-center gap-3 min-w-0">
+                                            <!-- Icon based on type -->
+                                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-800 text-slate-300">
+                                                <!-- PDF -->
+                                                <svg v-if="resource.file_type === 'pdf'" class="h-5 w-5 text-rose-400" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+                                                </svg>
+                                                <!-- Code / Zip -->
+                                                <svg v-else-if="resource.file_type === 'code' || resource.file_type === 'zip'" class="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                                                </svg>
+                                                <!-- Link -->
+                                                <svg v-else-if="resource.file_type === 'link'" class="h-5 w-5 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                </svg>
+                                                <!-- Default Doc -->
+                                                <svg v-else class="h-5 w-5 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                            </div>
+                                            <div class="truncate">
+                                                <h4 class="text-xs font-bold text-white truncate" :title="resource.title">{{ resource.title }}</h4>
+                                                <span class="text-[11px] text-slate-400">{{ resource.file_size_human || (resource.file_type.toUpperCase()) }}</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Action Button -->
+                                        <a
+                                            :href="resource.file_path || resource.external_url || '#'"
+                                            :target="resource.external_url ? '_blank' : undefined"
+                                            :download="resource.file_path ? '' : undefined"
+                                            class="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-slate-800 hover:bg-primary hover:text-white px-3 py-1.5 text-xs font-bold text-slate-200 transition"
+                                        >
+                                            <span>{{ resource.external_url ? 'زيارة' : 'تحميل' }}</span>
+                                            <svg class="h-3.5 w-3.5 rtl:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path v-if="resource.external_url" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                            </svg>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Timestamped Notes Tab -->
@@ -648,6 +820,124 @@ function setPlaybackRate(rate: number) {
 
                             <div v-else class="rounded-xl border border-slate-800/80 bg-slate-900/40 p-6 text-center text-xs text-slate-500">
                                 لا توجد أسئلة مسجلة حول هذا الدرس بعد. كن أول من يطرح سؤالاً!
+                            </div>
+                        </div>
+
+                        <!-- Interactive Synchronized Transcript Tab -->
+                        <div v-else-if="activeTab === 'transcript'" class="py-6 space-y-6">
+                            <!-- Controls Header: Search & Language & AutoScroll -->
+                            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                                <!-- Search bar -->
+                                <div class="relative flex-1 min-w-[240px] max-w-md">
+                                    <span class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none text-slate-500">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        </svg>
+                                    </span>
+                                    <input
+                                        v-model="transcriptSearchQuery"
+                                        type="text"
+                                        placeholder="بحث في تفريغ المحاضرة..."
+                                        class="w-full rounded-xl border border-slate-700 bg-slate-900/90 py-2 ps-9 pe-16 text-xs text-white placeholder-slate-500 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                                    />
+                                    <span v-if="transcriptSearchQuery" class="absolute inset-y-0 end-0 flex items-center pe-3 text-[10px] font-bold text-primary-400">
+                                        {{ filteredTranscriptCues.length }} نتيجة
+                                    </span>
+                                </div>
+
+                                <!-- Options: Language Selector & Auto-Scroll Toggle -->
+                                <div class="flex items-center gap-3">
+                                    <!-- Language Selector if multiple subtitles exist -->
+                                    <div v-if="currentLesson.subtitles && currentLesson.subtitles.length > 1" class="flex items-center rounded-lg border border-slate-700 bg-slate-900 p-0.5 text-xs font-bold">
+                                        <button
+                                            v-for="sub in currentLesson.subtitles"
+                                            :key="sub.id"
+                                            type="button"
+                                            @click="loadTranscript(sub.language)"
+                                            :class="[
+                                                'rounded-md px-2.5 py-1 transition text-xs',
+                                                transcriptLang === sub.language ? 'bg-primary text-white shadow' : 'text-slate-400 hover:text-white'
+                                            ]"
+                                        >
+                                            {{ sub.label }}
+                                        </button>
+                                    </div>
+
+                                    <!-- Auto-scroll Toggle -->
+                                    <button
+                                        type="button"
+                                        @click="autoScrollTranscript = !autoScrollTranscript"
+                                        :class="[
+                                            'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold transition',
+                                            autoScrollTranscript
+                                                ? 'border-emerald-600/80 bg-emerald-950/40 text-emerald-300'
+                                                : 'border-slate-700 bg-slate-800 text-slate-400 hover:text-white'
+                                        ]"
+                                        title="تثبيت التمرير التلقائي مع كلام المحاضر"
+                                    >
+                                        <span class="h-2 w-2 rounded-full" :class="autoScrollTranscript ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'"></span>
+                                        <span>التمرير التلقائي</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Transcript Body -->
+                            <div
+                                ref="transcriptContainerRef"
+                                class="max-h-[600px] overflow-y-auto rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4 space-y-2 divide-y divide-slate-800/40"
+                            >
+                                <!-- Loading State -->
+                                <div v-if="isLoadingTranscript" class="py-12 text-center text-xs text-slate-400">
+                                    <svg class="h-6 w-6 animate-spin mx-auto text-primary mb-2" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                    </svg>
+                                    <span>جاري تحميل ومزامنة التفريغ النصي...</span>
+                                </div>
+
+                                <!-- Empty State -->
+                                <div v-else-if="filteredTranscriptCues.length === 0" class="py-12 text-center text-xs text-slate-500">
+                                    <p v-if="transcriptSearchQuery">لم يتم العثور على نتائج تطابق: "{{ transcriptSearchQuery }}"</p>
+                                    <p v-else>لا يتوفر تفريغ نصي لهذا الدرس حالياً.</p>
+                                </div>
+
+                                <!-- Cues List -->
+                                <div
+                                    v-else
+                                    v-for="cue in filteredTranscriptCues"
+                                    :key="cue.id"
+                                    :id="'cue-' + cue.id"
+                                    @click="jumpToCue(cue)"
+                                    :class="[
+                                        'group flex items-start gap-4 p-3 rounded-xl transition cursor-pointer pt-3',
+                                        currentActiveCueId === cue.id
+                                            ? 'bg-primary-950/70 border-s-4 border-primary text-white shadow-lg'
+                                            : 'text-slate-300 hover:bg-slate-800/60 hover:text-white'
+                                    ]"
+                                >
+                                    <!-- Timestamp Chip -->
+                                    <button
+                                        type="button"
+                                        class="shrink-0 inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-mono font-bold transition"
+                                        :class="[
+                                            currentActiveCueId === cue.id
+                                                ? 'bg-primary text-white'
+                                                : 'bg-slate-800 text-slate-400 group-hover:bg-slate-700 group-hover:text-primary-300'
+                                        ]"
+                                    >
+                                        <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                                        </svg>
+                                        <span>{{ formatVttTime(cue.startTime) }}</span>
+                                    </button>
+
+                                    <!-- Cue Text with search highlight -->
+                                    <p
+                                        class="flex-1 text-sm leading-relaxed transition"
+                                        :class="currentActiveCueId === cue.id ? 'font-medium text-white' : 'text-slate-300'"
+                                        v-html="highlightMatch(cue.text, transcriptSearchQuery)"
+                                    ></p>
+                                </div>
                             </div>
                         </div>
                     </div>

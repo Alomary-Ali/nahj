@@ -6,6 +6,8 @@ use App\Models\Category;
 use App\Models\Course;
 use App\Models\CourseModule;
 use App\Models\Lesson;
+use App\Models\LessonResource;
+use App\Models\LessonSubtitle;
 use App\Models\Quiz;
 use App\Models\QuizQuestion;
 use App\Models\QuizQuestionOption;
@@ -106,7 +108,7 @@ class CurriculumSeeder extends Seeder
         );
 
         // 5. Lessons for Module 1
-        Lesson::firstOrCreate(
+        $lesson1 = Lesson::firstOrCreate(
             ['module_id' => $module1->id, 'sort_order' => 1],
             [
                 'title' => 'مرحباً بك في عالم التعلم العميق (Course Overview)',
@@ -116,6 +118,44 @@ class CurriculumSeeder extends Seeder
                 'content' => 'مقدمة ترحيبية من الدكتور أندرو إنغ حول ما ستتعلمه في هذا المقرر وكيفية تحقيق أقصى استفادة منه.',
                 'video_url' => 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
                 'is_preview' => true,
+            ]
+        );
+
+        LessonSubtitle::firstOrCreate(
+            ['lesson_id' => $lesson1->id, 'language' => 'ar'],
+            [
+                'label' => 'العربية (Arabic)',
+                'file_url' => '/subtitles/sample-ar.vtt',
+                'is_default' => true,
+            ]
+        );
+
+        LessonSubtitle::firstOrCreate(
+            ['lesson_id' => $lesson1->id, 'language' => 'en'],
+            [
+                'label' => 'English',
+                'file_url' => '/subtitles/sample-en.vtt',
+                'is_default' => false,
+            ]
+        );
+
+        LessonResource::firstOrCreate(
+            ['lesson_id' => $lesson1->id, 'title' => 'شرائح المحاضرة التقديمية (Lecture Slides)'],
+            [
+                'file_path' => '/subtitles/sample-ar.vtt',
+                'file_type' => 'pdf',
+                'file_size_human' => '2.8 MB',
+                'sort_order' => 1,
+            ]
+        );
+
+        LessonResource::firstOrCreate(
+            ['lesson_id' => $lesson1->id, 'title' => 'المستودع الرسمي للمشروع (GitHub Repository)'],
+            [
+                'external_url' => 'https://github.com/Alomary-Ali/nahj',
+                'file_type' => 'link',
+                'file_size_human' => 'رابط خارجي',
+                'sort_order' => 2,
             ]
         );
 

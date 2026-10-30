@@ -26,7 +26,7 @@ class LessonController extends Controller
 
         $lesson = Lesson::where('slug', $lessonSlug)
             ->whereHas('module', fn ($q) => $q->where('course_id', $course->id))
-            ->with('subtitles')
+            ->with(['subtitles', 'resources'])
             ->firstOrFail();
 
         // Gatekeeper: If lesson is not preview, student must be authenticated and enrolled (or admin/instructor)
